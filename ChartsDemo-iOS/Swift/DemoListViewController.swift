@@ -17,7 +17,11 @@ private struct ItemDef {
 class DemoListViewController: UIViewController {
     
     @IBOutlet var tableView: UITableView!
-    private var itemDefs = [ItemDef(title: "Line Chart",
+    private var itemDefs = [
+                    ItemDef(title: "Line Chart (Gradient)",
+                            subtitle: "A demonstration of the linechart with gradient.",
+                            class: LineChartGradientViewController.self),
+                    ItemDef(title: "Line Chart",
                             subtitle: "A simple demonstration of the linechart.",
                             class: LineChart1ViewController.self),
                     ItemDef(title: "Line Chart (Dual YAxis)",
