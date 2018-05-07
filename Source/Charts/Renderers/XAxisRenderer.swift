@@ -19,6 +19,10 @@ import CoreGraphics
 @objc(ChartXAxisRenderer)
 open class XAxisRenderer: AxisRendererBase
 {
+    
+    /// A list of indices at which to display labels
+    public var labelIndices: [Double]?
+    
     @objc public init(viewPortHandler: ViewPortHandler, xAxis: XAxis?, transformer: Transformer?)
     {
         super.init(viewPortHandler: viewPortHandler, transformer: transformer, axis: xAxis)
@@ -195,6 +199,11 @@ open class XAxisRenderer: AxisRendererBase
         if xAxis.isWordWrapEnabled
         {
             labelMaxSize.width = xAxis.wordWrapWidthPercent * valueToPixelMatrix.a
+        }
+        
+        // If entries have been provided externally, use them instead of the computed entries
+        if let labelIndices = labelIndices {
+            xAxis.entries = labelIndices
         }
         
         let entries = xAxis.entries
