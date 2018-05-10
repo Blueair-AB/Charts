@@ -802,9 +802,8 @@ open class LineChartRenderer: LineRadarRenderer
         
         let gradientPath = spline.copy(strokingWithWidth: dataSet.lineWidth, lineCap: .butt, lineJoin: .miter, miterLimit: 10)
         context.addPath(gradientPath)
-        context.drawPath(using: .fill)
-        
-        let boundingBox = gradientPath.boundingBox
+
+        let boundingBox = CGRect(x: 0, y: 0, width: viewPortHandler.chartWidth, height: viewPortHandler.chartHeight)
         let gradientStart = CGPoint(x: 0, y: boundingBox.maxY)
         let gradientEnd = CGPoint(x: 0, y: boundingBox.minY)
         var gradientLocations = [CGFloat]()
