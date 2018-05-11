@@ -74,6 +74,19 @@ open class LineChartRenderer: LineRadarRenderer
             drawLinear(context: context, dataSet: dataSet)
             
         case .cubicBezier:
+            
+            if let fillRegions = dataSet.fillRegions, dataSet.isDrawFillRegionsEnabled {
+                
+                var fillPaths: [CGMutablePath] = []
+                for range in fillRegions {
+                    if let path = computeFillPath(context: context, dataSet: dataSet, firstIndex: Int(range.from), lastIndex: Int(range.to)) {
+                        fillPaths.append(path)
+                    }
+                }
+
+                drawFillPaths(context: context, dataSet: dataSet, fillPaths: fillPaths)
+            }
+            
             drawCubicBezier(context: context, dataSet: dataSet)
             
         case .horizontalBezier:
@@ -81,6 +94,112 @@ open class LineChartRenderer: LineRadarRenderer
         }
         
         context.restoreGState()
+    }
+    
+    open func drawFillPaths(context: CGContext, dataSet: ILineChartDataSet, fillPaths: [CGMutablePath]) {
+        
+        guard let dataProvider = dataProvider else { return }
+        
+        let trans = dataProvider.getTransformer(forAxis: dataSet.axisDependency)
+        let valueToPixelMatrix = trans.valueToPixelMatrix
+        
+        for path in fillPaths {
+            drawCubicFill(context: context, dataSet: dataSet, spline: path, matrix: valueToPixelMatrix, bounds: _xBounds, splineNeedsClosing: false)
+        }
+    }
+    
+    @objc open func computeFillPath(context: CGContext, dataSet: ILineChartDataSet, firstIndex: Int, lastIndex: Int) -> CGMutablePath?
+    {
+ 
+        guard let dataProvider = dataProvider else { return nil }
+        
+        let trans = dataProvider.getTransformer(forAxis: dataSet.axisDependency)
+        
+        let phaseY = animator.phaseY
+        
+        _xBounds.set(chart: dataProvider, dataSet: dataSet, animator: animator)
+        
+        // get the color that is specified for this position from the DataSet
+        let drawingColor = dataSet.colors.first!
+        
+        let intensity = dataSet.cubicIntensity
+        
+        // the path for the cubic-spline
+        let cubicPath = CGMutablePath()
+        
+        let valueToPixelMatrix = trans.valueToPixelMatrix
+        
+        if _xBounds.range >= 1
+        {
+            var prevDx: CGFloat = 0.0
+            var prevDy: CGFloat = 0.0
+            var curDx: CGFloat = 0.0
+            var curDy: CGFloat = 0.0
+            
+            // Take an extra point from the left, and an extra from the right.
+            // That's because we need 4 points for a cubic bezier (cubic=4), otherwise we get lines moving and doing weird stuff on the edges of the chart.
+            // So in the starting `prev` and `cur`, go -2, -1
+            // And in the `lastIndex`, add +1
+            
+            var prevPrev: ChartDataEntry! = nil
+            var prev: ChartDataEntry! = dataSet.entryForIndex(max(firstIndex - 2, 0))
+            var cur: ChartDataEntry! = dataSet.entryForIndex(max(firstIndex - 1, 0))
+            var next: ChartDataEntry! = cur
+            var nextIndex: Int = -1
+            
+            if cur == nil { return nil }
+            
+            // let the spline start
+            cubicPath.move(to: CGPoint(x: CGFloat(cur.x), y: CGFloat(cur.y * phaseY)), transform: valueToPixelMatrix)
+            
+            for j in stride(from: firstIndex, through: lastIndex, by: 1)
+            {
+                prevPrev = prev
+                prev = cur
+                cur = nextIndex == j ? next : dataSet.entryForIndex(j)
+                
+                nextIndex = j + 1 < dataSet.entryCount ? j + 1 : j
+                next = dataSet.entryForIndex(nextIndex)
+                
+                if next == nil { break }
+                
+                prevDx = CGFloat(cur.x - prevPrev.x) * intensity
+                prevDy = CGFloat(cur.y - prevPrev.y) * intensity
+                curDx = CGFloat(next.x - prev.x) * intensity
+                curDy = CGFloat(next.y - prev.y) * intensity
+                
+                cubicPath.addCurve(
+                    to: CGPoint(
+                        x: CGFloat(cur.x),
+                        y: CGFloat(cur.y) * CGFloat(phaseY)),
+                    control1: CGPoint(
+                        x: CGFloat(prev.x) + prevDx,
+                        y: (CGFloat(prev.y) + prevDy) * CGFloat(phaseY)),
+                    control2: CGPoint(
+                        x: CGFloat(cur.x) - curDx,
+                        y: (CGFloat(cur.y) - curDy) * CGFloat(phaseY)),
+                    transform: valueToPixelMatrix)
+                
+            }
+        }
+        
+        let fillMin = dataSet.fillFormatter?.getFillLinePosition(dataSet: dataSet, dataProvider: dataProvider) ?? 0.0
+
+        var pt1 = CGPoint(x: CGFloat(dataSet.entryForIndex(firstIndex-1)?.x ?? 0.0), y: fillMin)
+        var pt2 = CGPoint(x: CGFloat(dataSet.entryForIndex(lastIndex)?.x ?? 0.0), y: fillMin)
+
+        pt1 = pt1.applying(valueToPixelMatrix)
+        pt2 = pt2.applying(valueToPixelMatrix)
+
+        cubicPath.addLine(to: pt2)
+        cubicPath.addLine(to: pt1)
+
+        cubicPath.closeSubpath()
+        
+        context.saveGState()
+        defer { context.restoreGState() }
+        
+        return cubicPath.mutableCopy()
     }
     
     @objc open func drawCubicBezier(context: CGContext, dataSet: ILineChartDataSet)
@@ -255,8 +374,11 @@ open class LineChartRenderer: LineRadarRenderer
         dataSet: ILineChartDataSet,
         spline: CGMutablePath,
         matrix: CGAffineTransform,
-        bounds: XBounds)
+        bounds: XBounds,
+        splineNeedsClosing: Bool = true)
     {
+        
+        
         guard
             let dataProvider = dataProvider
             else { return }
@@ -266,16 +388,21 @@ open class LineChartRenderer: LineRadarRenderer
             return
         }
         
-        let fillMin = dataSet.fillFormatter?.getFillLinePosition(dataSet: dataSet, dataProvider: dataProvider) ?? 0.0
         
-        var pt1 = CGPoint(x: CGFloat(dataSet.entryForIndex(bounds.min + bounds.range)?.x ?? 0.0), y: fillMin)
-        var pt2 = CGPoint(x: CGFloat(dataSet.entryForIndex(bounds.min)?.x ?? 0.0), y: fillMin)
-        pt1 = pt1.applying(matrix)
-        pt2 = pt2.applying(matrix)
-        
-        spline.addLine(to: pt1)
-        spline.addLine(to: pt2)
-        spline.closeSubpath()
+        if splineNeedsClosing {
+            let fillMin = dataSet.fillFormatter?.getFillLinePosition(dataSet: dataSet, dataProvider: dataProvider) ?? 0.0
+            
+            var pt1 = CGPoint(x: CGFloat(dataSet.entryForIndex(bounds.min + bounds.range)?.x ?? 0.0), y: fillMin)
+            var pt2 = CGPoint(x: CGFloat(dataSet.entryForIndex(bounds.min)?.x ?? 0.0), y: fillMin)
+
+            pt1 = pt1.applying(matrix)
+            pt2 = pt2.applying(matrix)
+
+            spline.addLine(to: pt1)
+            spline.addLine(to: pt2)
+
+            spline.closeSubpath()
+        }
         
         if dataSet.fill != nil
         {

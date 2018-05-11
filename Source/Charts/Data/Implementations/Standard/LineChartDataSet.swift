@@ -76,6 +76,9 @@ open class LineChartDataSet: LineRadarChartDataSet, ILineChartDataSet
         }
     }
     
+    open var isDrawFillRegionsEnabled = false
+    open var fillRegions: [Range]?
+    
     open var isDrawLineWithGradientEnabled = false
     open var gradientPositions: [CGFloat]?
     

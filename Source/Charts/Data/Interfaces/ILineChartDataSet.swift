@@ -30,6 +30,11 @@ public protocol ILineChartDataSet: ILineRadarChartDataSet
     /// **default**: 0.2
     var cubicIntensity: CGFloat { get set }
     
+    /// If true, the area below the line will be filled based on fillRegions
+    var isDrawFillRegionsEnabled: Bool { get set }
+    
+    var fillRegions: [Range]? { get set }
+    
     /// If true, gradient lines are drawn instead of solid
     var isDrawLineWithGradientEnabled: Bool { get set }
  
