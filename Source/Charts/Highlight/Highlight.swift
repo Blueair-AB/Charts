@@ -150,7 +150,14 @@ open class Highlight: NSObject
     @objc open var y: Double { return _y }
     @objc open var xPx: CGFloat { return _xPx }
     @objc open var yPx: CGFloat { return _yPx }
-    @objc open var dataSetIndex: Int { return _dataSetIndex }
+    @objc open var dataSetIndex: Int {
+        get  {
+            return _dataSetIndex
+        }
+        set {
+            _dataSetIndex = newValue
+        }
+    }
     @objc open var stackIndex: Int { return _stackIndex }
     @objc open var axis: YAxis.AxisDependency { return _axis }
     
