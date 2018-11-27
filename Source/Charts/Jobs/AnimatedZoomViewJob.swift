@@ -92,5 +92,10 @@ open class AnimatedZoomViewJob: AnimatedViewPortJob
     {
         (view as? BarLineChartViewBase)?.calculateOffsets()
         view?.setNeedsDisplay()
+        if let delegate = view?.delegate, let chart = view as? BarLineChartViewBase {
+            delegate.chartAnimationEnded?(chart)
+        } else if let delegate = view as? ChartViewDelegate, let chart = view as? BarLineChartViewBase {
+            delegate.chartAnimationEnded?(chart)
+        }
     }
 }
