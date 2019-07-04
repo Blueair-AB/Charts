@@ -18,6 +18,12 @@ import UIKit
 
 open class LineChartRenderer: LineRadarRenderer
 {
+    // TODO: Currently, this nesting isn't necessary for LineCharts. However, it will make it much easier to add a custom rotor
+    // that navigates between datasets.
+    // NOTE: Unlike the other renderers, LineChartRenderer populates accessibleChartElements in drawCircles due to the nature of its drawing options.
+    /// A nested array of elements ordered logically (i.e not in visual/drawing order) for use with VoiceOver.
+    private lazy var accessibilityOrderedElements: [[NSUIAccessibilityElement]] = accessibilityCreateEmptyOrderedElements()
+
     @objc open weak var dataProvider: LineChartDataProvider?
     
     @objc public init(dataProvider: LineChartDataProvider, animator: Animator, viewPortHandler: ViewPortHandler)
@@ -65,6 +71,8 @@ open class LineChartRenderer: LineRadarRenderer
         {
             context.setLineDash(phase: 0.0, lengths: [])
         }
+        
+        context.setLineCap(dataSet.lineCapType)
         
         // if drawing cubic lines is enabled
         switch dataSet.mode
@@ -211,7 +219,7 @@ open class LineChartRenderer: LineRadarRenderer
             // let the spline start
             cubicPath.move(to: CGPoint(x: CGFloat(cur.x), y: CGFloat(cur.y * phaseY)), transform: valueToPixelMatrix)
             
-            for j in stride(from: (_xBounds.min + 1), through: _xBounds.range + _xBounds.min, by: 1)
+            for j in _xBounds.dropFirst()
             {
                 prev = cur
                 cur = dataSet.entryForIndex(j)
@@ -328,35 +336,30 @@ open class LineChartRenderer: LineRadarRenderer
                 _lineSegments = [CGPoint](repeating: CGPoint(), count: pointsPerEntryPair)
             }
             
-            for j in stride(from: _xBounds.min, through: _xBounds.range + _xBounds.min, by: 1)
+        for j in stride(from: _xBounds.min, through: _xBounds.range + _xBounds.min, by: 1)
+        {
+            var e: ChartDataEntry! = dataSet.entryForIndex(j)
+            
+            if e == nil { continue }
+            
+            _lineSegments[0].x = CGFloat(e.x)
+            _lineSegments[0].y = CGFloat(e.y * phaseY)
+            
+            if j < _xBounds.max
             {
-                var e: ChartDataEntry! = dataSet.entryForIndex(j)
+                e = dataSet.entryForIndex(j + 1)
                 
-                if e == nil { continue }
+                if e == nil { break }
                 
-                _lineSegments[0].x = CGFloat(e.x)
-                _lineSegments[0].y = CGFloat(e.y * phaseY)
-                
-                if j < _xBounds.max
+                if isDrawSteppedEnabled
                 {
-                    e = dataSet.entryForIndex(j + 1)
-                    
-                    if e == nil { break }
-                    
-                    if isDrawSteppedEnabled
-                    {
-                        _lineSegments[1] = CGPoint(x: CGFloat(e.x), y: _lineSegments[0].y)
-                        _lineSegments[2] = _lineSegments[1]
-                        _lineSegments[3] = CGPoint(x: CGFloat(e.x), y: CGFloat(e.y * phaseY))
-                    }
-                    else
-                    {
-                        _lineSegments[1] = CGPoint(x: CGFloat(e.x), y: CGFloat(e.y * phaseY))
-                    }
+                    _lineSegments[1] = CGPoint(x: CGFloat(e.x), y: _lineSegments[0].y)
+                    _lineSegments[2] = _lineSegments[1]
+                    _lineSegments[3] = CGPoint(x: CGFloat(e.x), y: CGFloat(e.y * phaseY))
                 }
                 else
                 {
-                    _lineSegments[1] = _lineSegments[0]
+                    _lineSegments[1] = CGPoint(x: CGFloat(e.x), y: CGFloat(e.y * phaseY))
                 }
                 
                 for i in 0..<_lineSegments.count
@@ -530,12 +533,10 @@ open class LineChartRenderer: LineRadarRenderer
             
             for i in 0 ..< dataSets.count
             {
-                guard let dataSet = dataSets[i] as? ILineChartDataSet else { continue }
-                
-                if !shouldDrawValues(forDataSet: dataSet)
-                {
-                    continue
-                }
+                guard let
+                    dataSet = dataSets[i] as? ILineChartDataSet,
+                    shouldDrawValues(forDataSet: dataSet)
+                    else { continue }
                 
                 let valueFont = dataSet.valueFont
                 
@@ -555,8 +556,8 @@ open class LineChartRenderer: LineRadarRenderer
                 }
                 
                 _xBounds.set(chart: dataProvider, dataSet: dataSet, animator: animator)
-                
-                for j in stride(from: _xBounds.min, through: min(_xBounds.min + _xBounds.range, _xBounds.max), by: 1)
+
+                for j in _xBounds
                 {
                     guard let e = dataSet.entryForIndex(j) else { break }
                     
@@ -586,7 +587,7 @@ open class LineChartRenderer: LineRadarRenderer
                                 x: pt.x,
                                 y: pt.y - CGFloat(valOffset) - valueFont.lineHeight),
                             align: .center,
-                            attributes: [NSAttributedStringKey.font: valueFont, NSAttributedStringKey.foregroundColor: dataSet.valueTextColorAt(j)])
+                            attributes: [NSAttributedString.Key.font: valueFont, NSAttributedString.Key.foregroundColor: dataSet.valueTextColorAt(j)])
                     }
                     
                     if let icon = e.icon, dataSet.isDrawIconsEnabled
@@ -621,13 +622,25 @@ open class LineChartRenderer: LineRadarRenderer
         var pt = CGPoint()
         var rect = CGRect()
         
+        // If we redraw the data, remove and repopulate accessible elements to update label values and frames
+        accessibleChartElements.removeAll()
+        accessibilityOrderedElements = accessibilityCreateEmptyOrderedElements()
+
+        // Make the chart header the first element in the accessible elements array
+        if let chart = dataProvider as? LineChartView {
+            let element = createAccessibleHeader(usingChart: chart,
+                                                 andData: lineData,
+                                                 withDefaultDescription: "Line Chart")
+            accessibleChartElements.append(element)
+        }
+
         context.saveGState()
-        
+
         for i in 0 ..< dataSets.count
         {
             guard let dataSet = lineData.getDataSetByIndex(i) as? ILineChartDataSet else { continue }
             
-            if !dataSet.isVisible || !dataSet.isDrawCirclesEnabled || dataSet.entryCount == 0
+            if !dataSet.isVisible || dataSet.entryCount == 0
             {
                 continue
             }
@@ -649,7 +662,7 @@ open class LineChartRenderer: LineRadarRenderer
                 (dataSet.circleHoleColor == nil ||
                     dataSet.circleHoleColor == NSUIColor.clear)
             
-            for j in stride(from: _xBounds.min, through: _xBounds.range + _xBounds.min, by: 1)
+            for j in _xBounds
             {
                 guard let e = dataSet.entryForIndex(j) else { break }
                 
@@ -668,13 +681,38 @@ open class LineChartRenderer: LineRadarRenderer
                     continue
                 }
                 
+                // Accessibility element geometry
+                let scaleFactor: CGFloat = 3
+                let accessibilityRect = CGRect(x: pt.x - (scaleFactor * circleRadius),
+                                               y: pt.y - (scaleFactor * circleRadius),
+                                               width: scaleFactor * circleDiameter,
+                                               height: scaleFactor * circleDiameter)
+                // Create and append the corresponding accessibility element to accessibilityOrderedElements
+                if let chart = dataProvider as? LineChartView
+                {
+                    let element = createAccessibleElement(withIndex: j,
+                                                          container: chart,
+                                                          dataSet: dataSet,
+                                                          dataSetIndex: i)
+                    { (element) in
+                        element.accessibilityFrame = accessibilityRect
+                    }
+
+                    accessibilityOrderedElements[i].append(element)
+                }
+
+                if !dataSet.isDrawCirclesEnabled
+                {
+                    continue
+                }
+
                 context.setFillColor(dataSet.getCircleColor(atIndex: j)!.cgColor)
-                
+
                 rect.origin.x = pt.x - circleRadius
                 rect.origin.y = pt.y - circleRadius
                 rect.size.width = circleDiameter
                 rect.size.height = circleDiameter
-                
+
                 if drawTransparentCircleHole
                 {
                     // Begin path for circle with hole
@@ -712,6 +750,10 @@ open class LineChartRenderer: LineRadarRenderer
         }
         
         context.restoreGState()
+
+        // Merge nested ordered arrays into the single accessibleChartElements.
+        accessibleChartElements.append(contentsOf: accessibilityOrderedElements.flatMap { $0 } )
+        accessibilityPostLayoutChangedNotification()
     }
     
     open override func drawHighlighted(context: CGContext, indices: [Highlight])
