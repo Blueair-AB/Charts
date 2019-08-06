@@ -40,6 +40,7 @@ open class ChartLimitLine: ComponentBase
     @objc open var drawLabelEnabled = true
     @objc open var label = ""
     @objc open var labelPosition = LabelPosition.topRight
+    @objc open var labelBackgroundColor = UIColor.clear
     
     public override init()
     {

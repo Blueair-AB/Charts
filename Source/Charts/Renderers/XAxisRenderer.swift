@@ -395,7 +395,8 @@ open class XAxisRenderer: AxisRendererBase
         let xOffset: CGFloat = limitLine.lineWidth + limitLine.xOffset
         let attributes: [NSAttributedString.Key : Any] = [
             .font : limitLine.valueFont,
-            .foregroundColor : limitLine.valueTextColor
+            .foregroundColor : limitLine.valueTextColor,
+            .backgroundColor: limitLine.labelBackgroundColor
         ]
 
         let (point, align): (CGPoint, NSTextAlignment)
