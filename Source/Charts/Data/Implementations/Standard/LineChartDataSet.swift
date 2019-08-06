@@ -151,6 +151,9 @@ open class LineChartDataSet: LineRadarChartDataSet, ILineChartDataSet
         }
     }
     
+    open var isDrawLineWithGradientEnabled = false
+    open var gradientPositions: [CGFloat]?
+    
     // MARK: NSCopying
     
     open override func copy(with zone: NSZone? = nil) -> Any

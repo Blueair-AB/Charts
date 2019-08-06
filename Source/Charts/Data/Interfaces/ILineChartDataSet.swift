@@ -77,4 +77,11 @@ public protocol ILineChartDataSet: ILineRadarChartDataSet
     
     /// Sets a custom IFillFormatter to the chart that handles the position of the filled-line for each DataSet. Set this to null to use the default logic.
     var fillFormatter: IFillFormatter? { get set }
+    
+    /// If true, gradient lines are drawn instead of solid
+    var isDrawLineWithGradientEnabled: Bool { get set }
+    
+    /// The points where gradient should change color
+    var gradientPositions: [CGFloat]? { get set }
+    
 }
