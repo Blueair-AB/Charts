@@ -112,6 +112,9 @@ class LineChart2ViewController: DemoBaseViewController {
         set1.fillColor = UIColor(red: 51/255, green: 181/255, blue: 229/255, alpha: 1)
         set1.highlightColor = UIColor(red: 244/255, green: 117/255, blue: 117/255, alpha: 1)
         set1.drawCircleHoleEnabled = false
+        set1.isDrawLineWithGradientEnabled = true
+        set1.gradientPositions = [0, 50, 100, 150, 200, 500]
+        set1.colors = [.blue, .green, .orange, .red, .purple]
         
         let set2 = LineChartDataSet(entries: yVals2, label: "DataSet 2")
         set2.axisDependency = .right
@@ -123,12 +126,18 @@ class LineChart2ViewController: DemoBaseViewController {
         set2.fillColor = .red
         set2.highlightColor = UIColor(red: 244/255, green: 117/255, blue: 117/255, alpha: 1)
         set2.drawCircleHoleEnabled = false
-
+        set2.isDrawLineWithGradientEnabled = true
+        set2.gradientPositions = [0, 50, 100, 150, 200, 500]
+        set2.colors = [.blue, .green, .orange, .red, .purple]
+        
         let set3 = LineChartDataSet(entries: yVals3, label: "DataSet 3")
         set3.axisDependency = .right
         set3.setColor(.yellow)
         set3.setCircleColor(.white)
         set3.lineWidth = 2
+        set3.isDrawLineWithGradientEnabled = true
+        set3.gradientPositions = [0, 50, 100, 150, 200, 500]
+        set3.colors = [.blue, .green, .orange, .red, .purple]
         set3.circleRadius = 3
         set3.fillAlpha = 65/255
         set3.fillColor = UIColor.yellow.withAlphaComponent(200/255)
