@@ -849,10 +849,8 @@ open class LineChartRenderer: LineRadarRenderer
         //Set lower bound color
         gradientLocations.append(0)
         var cColor = dataSet.color(atIndex: 0)
-        if cColor.getRed(&cRed, green: &cGreen, blue: &cBlue, alpha: &cAlpha)
-        {
-            gradientColors += [cRed, cGreen, cBlue, cAlpha]
-        }
+        cColor.getRed(&cRed, green: &cGreen, blue: &cBlue, alpha: &cAlpha)
+        gradientColors += [cRed, cGreen, cBlue, cAlpha]
         
         //Set middle colors
         guard let gradientPositions = dataSet.gradientPositions else
@@ -880,10 +878,8 @@ open class LineChartRenderer: LineRadarRenderer
             for i in 0..<dataSet.colors.count
             {
                 cColor = dataSet.color(atIndex: i)
-                if cColor.getRed(&cRed, green: &cGreen, blue: &cBlue, alpha: &cAlpha)
-                {
-                    gradientColors += [cRed, cGreen, cBlue, cAlpha]
-                }
+                cColor.getRed(&cRed, green: &cGreen, blue: &cBlue, alpha: &cAlpha)
+                gradientColors += [cRed, cGreen, cBlue, cAlpha]
             }
         }
         
@@ -891,10 +887,8 @@ open class LineChartRenderer: LineRadarRenderer
         //Set upper bound color
         gradientLocations.append(1)
         cColor = dataSet.color(atIndex: dataSet.colors.count - 1)
-        if cColor.getRed(&cRed, green: &cGreen, blue: &cBlue, alpha: &cAlpha)
-        {
-            gradientColors += [cRed, cGreen, cBlue, cAlpha]
-        }
+        cColor.getRed(&cRed, green: &cGreen, blue: &cBlue, alpha: &cAlpha)
+        gradientColors += [cRed, cGreen, cBlue, cAlpha]
         
         //Define gradient
         let baseSpace = CGColorSpaceCreateDeviceRGB()
