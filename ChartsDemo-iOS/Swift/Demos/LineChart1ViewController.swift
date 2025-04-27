@@ -52,16 +52,23 @@ class LineChart1ViewController: DemoBaseViewController {
         llXAxis.lineDashLengths = [10, 10, 0]
         llXAxis.labelPosition = .rightBottom
         llXAxis.valueFont = .systemFont(ofSize: 10)
-
+        chartView.xAxis.labelFont = .systemFont(ofSize: 14)
         chartView.xAxis.gridLineDashLengths = [10, 10]
         chartView.xAxis.gridLineDashPhase = 0
 
-        let ll1 = ChartLimitLine(limit: 150, label: "Upper Limit")
+        let ll1 = ChartLimitLine(limit: 15, label: "Upperbbbb/nLimit")
         ll1.lineWidth = 4
         ll1.lineDashLengths = [5, 5]
-        ll1.labelPosition = .rightTop
+        ll1.labelPosition = .centerTop
         ll1.valueFont = .systemFont(ofSize: 10)
-
+        ll1.yOffset = 50
+        chartView.xAxis.addLimitLine(ll1)
+        chartView.clipDataToContentEnabled = false
+        chartView.xAxis.yOffset = 50
+        //chartView.xAxis.lab = 30
+//        chartView.xAxis.drawLabelsEnabled = false
+//        chartView.xAxis.drawAxisLineEnabled = false
+        
         let ll2 = ChartLimitLine(limit: -30, label: "Lower Limit")
         ll2.lineWidth = 4
         ll2.lineDashLengths = [5,5]
@@ -70,7 +77,7 @@ class LineChart1ViewController: DemoBaseViewController {
 
         let leftAxis = chartView.leftAxis
         leftAxis.removeAllLimitLines()
-        leftAxis.addLimitLine(ll1)
+       // leftAxis.addLimitLine(ll1)
         leftAxis.addLimitLine(ll2)
         leftAxis.axisMaximum = 200
         leftAxis.axisMinimum = -50
@@ -214,3 +221,4 @@ class LineChart1ViewController: DemoBaseViewController {
         self.updateChartData()
     }
 }
+

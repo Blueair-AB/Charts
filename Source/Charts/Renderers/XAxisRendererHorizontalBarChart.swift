@@ -259,7 +259,7 @@ open class XAxisRendererHorizontalBarChart: XAxisRenderer
 
                 switch l.labelPosition
                 {
-                case .rightTop:
+                case .rightTop,.centerTop:
                     align = .right
                     point = CGPoint(x: viewPortHandler.contentRight - xOffset,
                                     y: position.y - yOffset)

@@ -411,7 +411,7 @@ open class XAxisRenderer: NSObject, AxisRenderer
             var clippingRect = viewPortHandler.contentRect
             clippingRect.origin.x -= l.lineWidth / 2.0
             clippingRect.size.width += l.lineWidth
-            context.clip(to: clippingRect)
+           // context.clip(to: clippingRect)
             
             position.x = CGFloat(l.limit)
             position.y = 0.0
@@ -462,27 +462,57 @@ open class XAxisRenderer: NSObject, AxisRenderer
             align = .left
             point = CGPoint(x: position.x + xOffset,
                             y: viewPortHandler.contentTop + yOffset)
-
+            context.drawText(label,
+                             at: point,
+                             align: align,
+                             attributes: [.font: limitLine.valueFont,
+                                          .foregroundColor: limitLine.valueTextColor])
         case .rightBottom:
             align = .left
             point = CGPoint(x: position.x + xOffset,
                             y: viewPortHandler.contentBottom - labelLineHeight - yOffset)
-
+            context.drawText(label,
+                             at: point,
+                             align: align,
+                             attributes: [.font: limitLine.valueFont,
+                                          .foregroundColor: limitLine.valueTextColor])
         case .leftTop:
             align = .right
             point = CGPoint(x: position.x - xOffset,
                             y: viewPortHandler.contentTop + yOffset)
-
+            context.drawText(label,
+                             at: point,
+                             align: align,
+                             attributes: [.font: limitLine.valueFont,
+                                          .foregroundColor: limitLine.valueTextColor])
         case .leftBottom:
             align = .right
             point = CGPoint(x: position.x - xOffset,
                             y: viewPortHandler.contentBottom - labelLineHeight - yOffset)
+            context.drawText(label,
+                             at: point,
+                             align: align,
+                             attributes: [.font: limitLine.valueFont,
+                                          .foregroundColor: limitLine.valueTextColor])
+        case .centerTop:
+            align = .center
+            print("centerTop yOffset:\(yOffset) labelLineHeight:\(labelLineHeight)")
+            //let h =
+            var point = CGPoint(x: position.x,
+                            y: viewPortHandler.contentTop - yOffset - labelLineHeight)
+            let lines = label.components(separatedBy: "/n")
+            
+            for (_, line) in lines.enumerated()
+            {
+                context.drawText(line,
+                                 at: point,
+                                 align: align,
+                                 attributes: [.font: limitLine.valueFont,
+                                              .foregroundColor: limitLine.valueTextColor])
+                point.y = point.y + labelLineHeight
+            }
         }
 
-        context.drawText(label,
-                         at: point,
-                         align: align,
-                         attributes: [.font: limitLine.valueFont,
-                                      .foregroundColor: limitLine.valueTextColor])
+     
     }
 }
