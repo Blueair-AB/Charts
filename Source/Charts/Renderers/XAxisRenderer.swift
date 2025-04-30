@@ -496,7 +496,6 @@ open class XAxisRenderer: NSObject, AxisRenderer
                                           .foregroundColor: limitLine.valueTextColor])
         case .centerTop:
             align = .center
-            print("centerTop yOffset:\(yOffset) labelLineHeight:\(labelLineHeight)")
             //let h =
             var point = CGPoint(x: position.x,
                             y: viewPortHandler.contentTop - yOffset - labelLineHeight)
