@@ -508,7 +508,7 @@ open class XAxisRenderer: NSObject, AxisRenderer
                                  align: align,
                                  attributes: [.font: limitLine.valueFont,
                                               .foregroundColor: limitLine.valueTextColor])
-                point.y = point.y + labelLineHeight
+                point.y = point.y + labelLineHeight + 1.5
             }
         }
 
